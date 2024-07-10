@@ -1,5 +1,6 @@
 echo パスワードマネージャーへようこそ！
 Choice=1 #Choiceの初期値．Exit以外ならば何でもよい．
+gpg -d secret.txt.gpg > secret.txt 2> /dev/null #暗号化済みのファイルがあれば，復号する
 while [ $Choice != "Exit" ]
 do
     echo "次の選択肢から入力してください(Add Password / Get Password / Exit)："
@@ -29,3 +30,5 @@ do
         echo 入力が間違っています．Add Password / Get Password いずれかを入力してください．
     fi
 done
+gpg --pinentry-mode loopback -c secret.txt #ファイルを暗号化する
+rm secret.txt
