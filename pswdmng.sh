@@ -21,12 +21,12 @@ else
     Choice=1 #Exit以外ならなんでもよい
 fi
 ##################################################################################
-while [ $Choice != "Exit" ]
+while [ "$Choice" != "Exit" ]
 do
-    rm secret.txt
+    rm secret.txt 2> /dev/null
     echo "次の選択肢から入力してください(Add Password / Get Password / Exit)："
     read Choice
-    if [ $Choice = "Add Password" ] ; then
+    if [ "$Choice" = "Add Password" ] ; then
         echo サービス名を入力してください：
         read Svs
         echo ユーザー名を入力してください：
@@ -37,11 +37,11 @@ do
         echo "$Svs:$Usr:$Pwd" >> secret.txt
         gpg --batch --yes --passphrase="$IPwd" -c secret.txt  #secretの暗号化
         echo パスワードの追加は成功しました．
-    elif [ $Choice = "Get Password" ] ; then
+    elif [ "$Choice" = "Get Password" ] ; then
         echo サービス名を入力してください．
         read Svs
         gpg --batch --passphrase="$IPwd" -d secret.txt.gpg > secret.txt 2> /dev/null #secretの復号
-        if [ $Svs = $(grep "^$Svs:" secret.txt | cut -d : -f 1) ] ; then #入力したサービス名とsecret内のサービス名が完全一致しているかのチェック
+        if [ "$Svs" = "$(grep "^$Svs:" secret.txt | cut -d : -f 1)" ] ; then #入力したサービス名とsecret内のサービス名が完全一致しているかのチェック
             echo サービス名：$Svs
             echo ユーザー名：$(grep "^$Svs:" secret.txt | cut -d : -f 2)
             echo パスワード：$(grep "^$Svs:" secret.txt | cut -d : -f 3)
@@ -49,7 +49,7 @@ do
             echo そのサービス名は登録されていません．
         fi
         gpg --batch --yes --passphrase="$IPwd" -c secret.txt  #secretの暗号化
-    elif [ $Choice = "Exit" ] ; then
+    elif [ "$Choice" = "Exit" ] ; then
         echo Thank you!
     else
         echo 入力が間違っています．Add Password / Get Password いずれかを入力してください．
