@@ -4,7 +4,7 @@ if [ -e key.txt.gpg ] ; then
     echo パスワードマネージャーのパスワードを入力してください．
     read -s IPwd
     gpg --batch --passphrase="$IPwd" -d key.txt.gpg > key.txt 2> /dev/null #keyの復号
-    if [ $IPwd = $(cat key.txt)  ] ; then
+    if [ $IPwd = $(cat key.txt) 2> /dev/null ] ; then
         rm key.txt 
         Choice=1 #Exit以外ならなんでもよい
     else
