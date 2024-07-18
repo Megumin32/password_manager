@@ -1,5 +1,3 @@
-echo パスワードマネージャーへようこそ！
-
 function fileDecrypt () { #復号（引数は $1->パスワード $2->ファイル名）
     gpg --batch --passphrase=$1 -d $2.txt.gpg > $2.txt 2> /dev/null 
 }
@@ -7,6 +5,10 @@ function fileEncrypt () { #暗号化（引数は $1->パスワード $2->ファ�
     gpg --batch --yes --passphrase=$1 -c $2.txt  
 }
 
+echo パスワードマネージャーへようこそ！
+
+###########################################################################
+#パスワードマネージャーのパスワードを確認（初めての場合は作成）
 if [ -e key.txt.gpg ] ; then
     read -p "パスワードマネージャーのパスワードを入力してください．>" thisPassword
     fileDecrypt $thisPassword key
@@ -26,8 +28,9 @@ else
     rm key.txt
     option="start" #Exit以外ならなんでもよい
 fi
-
-while [ "$option" != "Exit" ]
+############################################################################
+#パスワードマネージャー本体
+while [ "$option" != "Exit" ] 
 do
     rm secret.txt 2> /dev/null
     read -p "次の選択肢から入力してください(Add Password / Get Password / Exit)．>" option
@@ -42,7 +45,7 @@ do
     elif [ "$option" = "Get Password" ] ; then
         read -p "サービス名を入力してください．>" serviceName
         fileDecrypt $thisPassword "secret"
-        if [ "$serviceName" = "$(grep "^$serviceName:" secret.txt | cut -d : -f 1)" ] ; then #入力したサービス名とsecret内のサービス名が完全一致しているかのチェック
+        if [ "$serviceName" = "$(grep "^$serviceName:" secret.txt | cut -d : -f 1)" ] ; then #入力したサービス名保存されたサービス名が完全一致しているかのチェック
             echo サービス名：$serviceName
             echo ユーザー名：$(grep "^$serviceName:" secret.txt | cut -d : -f 2)
             echo パスワード：$(grep "^$serviceName:" secret.txt | cut -d : -f 3)
