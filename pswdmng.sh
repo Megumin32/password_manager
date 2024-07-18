@@ -1,55 +1,56 @@
 echo パスワードマネージャーへようこそ！
-################keyを作成済みの場合はkeyが正しいか判定，未作成の場合新規作成################
+
+function fileDecrypt () { #復号（引数は $1->パスワード $2->ファイル名）
+    gpg --batch --passphrase=$1 -d $2.txt.gpg > $2.txt 2> /dev/null 
+}
+function fileEncrypt () { #暗号化（引数は $1->パスワード $2->ファイル名）
+    gpg --batch --yes --passphrase=$1 -c $2.txt  
+}
+
 if [ -e key.txt.gpg ] ; then
-    echo パスワードマネージャーのパスワードを入力してください．
-    read -s IPwd
-    gpg --batch --passphrase="$IPwd" -d key.txt.gpg > key.txt 2> /dev/null #keyの復号
-    if [ $IPwd = $(cat key.txt) 2> /dev/null ] ; then
+    read -p "パスワードマネージャーのパスワードを入力してください．>" thisPassword
+    fileDecrypt $thisPassword key
+    cat key.txt
+    if [ $thisPassword = $(cat key.txt) 2> /dev/null ] ; then
         rm key.txt 
-        Choice=1 #Exit以外ならなんでもよい
+        option="start" #Exit以外ならなんでもよい
     else
         echo パスワードが違います．
         rm key.txt
-        Choice="Exit"
+        option="Exit"
     fi
 else
-    echo 新規にパスワードを作成します．入力したらEnterを押してください．
-    read -s IPwd
-    echo $IPwd > key.txt 2> /dev/null
-    gpg --batch --yes --passphrase="$IPwd" -c key.txt  #keyの暗号化
+    read -p "新規にパスワードを作成します．入力したらEnterを押してください．>" -s thisPassword
+    echo $thisPassword > key.txt 2> /dev/null
+    fileEncrypt $thisPassword "key"
     rm key.txt
-    Choice=1 #Exit以外ならなんでもよい
+    option="start" #Exit以外ならなんでもよい
 fi
-##################################################################################
-while [ "$Choice" != "Exit" ]
+
+while [ "$option" != "Exit" ]
 do
     rm secret.txt 2> /dev/null
-    echo "次の選択肢から入力してください(Add Password / Get Password / Exit)："
-    read Choice
-    if [ "$Choice" = "Add Password" ] ; then
-        echo サービス名を入力してください：
-        read Svs
-        echo ユーザー名を入力してください：
-        read Usr
-        echo パスワードを入力してください：
-        read Pwd
-        gpg --batch --passphrase="$IPwd" -d secret.txt.gpg > secret.txt 2> /dev/null #secretの復号
-        echo "$Svs:$Usr:$Pwd" >> secret.txt
-        gpg --batch --yes --passphrase="$IPwd" -c secret.txt  #secretの暗号化
+    read -p "次の選択肢から入力してください(Add Password / Get Password / Exit)．>" option
+    if [ "$option" = "Add Password" ] ; then
+        read -p "サービス名を入力してください．>" serviceName
+        read -p "ユーザー名を入力してください．>" userName
+        read -p "パスワードを入力してください．>" servicePassword
+        fileDecrypt $thisPassword "secret" 
+        echo "$serviceName:$userName:$servicePassword" >> secret.txt
+        fileEncrypt $thisPassword "secret" 
         echo パスワードの追加は成功しました．
-    elif [ "$Choice" = "Get Password" ] ; then
-        echo サービス名を入力してください．
-        read Svs
-        gpg --batch --passphrase="$IPwd" -d secret.txt.gpg > secret.txt 2> /dev/null #secretの復号
-        if [ "$Svs" = "$(grep "^$Svs:" secret.txt | cut -d : -f 1)" ] ; then #入力したサービス名とsecret内のサービス名が完全一致しているかのチェック
-            echo サービス名：$Svs
-            echo ユーザー名：$(grep "^$Svs:" secret.txt | cut -d : -f 2)
-            echo パスワード：$(grep "^$Svs:" secret.txt | cut -d : -f 3)
+    elif [ "$option" = "Get Password" ] ; then
+        read -p "サービス名を入力してください．>" serviceName
+        fileDecrypt $thisPassword "secret"
+        if [ "$serviceName" = "$(grep "^$serviceName:" secret.txt | cut -d : -f 1)" ] ; then #入力したサービス名とsecret内のサービス名が完全一致しているかのチェック
+            echo サービス名：$serviceName
+            echo ユーザー名：$(grep "^$serviceName:" secret.txt | cut -d : -f 2)
+            echo パスワード：$(grep "^$serviceName:" secret.txt | cut -d : -f 3)
         else
             echo そのサービス名は登録されていません．
         fi
-        gpg --batch --yes --passphrase="$IPwd" -c secret.txt  #secretの暗号化
-    elif [ "$Choice" = "Exit" ] ; then
+        fileEncrypt $thisPassword "secret"
+    elif [ "$option" = "Exit" ] ; then
         echo Thank you!
     else
         echo 入力が間違っています．Add Password / Get Password いずれかを入力してください．
